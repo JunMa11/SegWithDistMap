@@ -29,17 +29,12 @@ In this repository,  we want to re-implement these methods (published in 2019) a
 
 
 
-
-
-
-
-
-### New loss functions
+### Auxiliary tasks
 
 | Date | First author  | Title                       | Official Code  | Publication                    |
 | ---- | ------------- | --------------------------- | -------------- | ------------------------------ |
 | 2019 | Yan Wang     | Deep Distance Transform for Tubular Structure Segmentation in CT Scans | None | [arxiv](https://arxiv.org/abs/1912.03383) |
-| 2019 | [Shusil Dangi](https://scholar.google.com.hk/citations?user=h12ifugAAAAJ&hl=zh-CN&oi=sra) | A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation [(arxiv)](https://arxiv.org/abs/1901.01238) | None | [Medical Physics](https://aapm.onlinelibrary.wiley.com/doi/abs/10.1002/mp.13853) |
+| 2019 | [Shusil Dangi](https://scholar.google.com.hk/citations?user=h12ifugAAAAJ&hl=zh-CN&oi=sra) |A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation [(arxiv)](https://arxiv.org/abs/1901.01238) | None | [Medical Physics](https://aapm.onlinelibrary.wiley.com/doi/abs/10.1002/mp.13853) |
 |2019|[Fernando Navarro](https://scholar.google.com.hk/citations?user=rRKrhrwAAAAJ&hl=zh-CN&oi=sra)|Shape-Aware Complementary-Task Learning for Multi-organ Segmentation [(arxiv)](https://arxiv.org/abs/1908.05099)|None| [MICCAI MLMI 2019](https://link.springer.com/chapter/10.1007/978-3-030-32692-0_71)|
 
 
