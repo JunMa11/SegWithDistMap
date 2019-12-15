@@ -102,6 +102,10 @@ def compute_sdf(img_gt, out_shape):
     return normalized_sdf
 
 def AAAI_sdf_loss(net_output, gt_sdm):
+    """
+    Re-implement Shape-Aware Organ Segmentation by Predicting Signed Distance Maps
+    https://arxiv.org/abs/1912.03849
+    """
     # print('net_output.shape, gt_sdm.shape', net_output.shape, gt_sdm.shape)
     smooth = 1e-5
     axes = tuple(range(1, len(net_output.size())))
@@ -184,7 +188,7 @@ if __name__ == "__main__":
                 print('outputs_soft max and min: ', torch.max(outputs_soft.cpu()), torch.min(outputs_soft.cpu()))
             loss_seg_dice = dice_loss(outputs_soft[:, 0, :, :, :], label_batch == 1)
 
-            loss = loss_sdf_aaai #  loss_seg_dice # + 10.0 *
+            loss = loss_sdf_aaai # Using loss_seg_dice + 10.0 * loss_sdf_aaai will cause Nan error!
 
             optimizer.zero_grad()
             loss.backward()
