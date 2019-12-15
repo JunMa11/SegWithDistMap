@@ -1,16 +1,18 @@
-# Medical Image Segmentation With Disttance Map
+# Medical Image Segmentation With Distance Transform Maps
+
+**How distance transform maps can assist medical image segmentation?**
 
 
 ## Motivation
 
-Incorporating the distance maps of image segmentation labels  into CNNs-based segmentation tasks has received significant attention in 2019. These methods can be classified into two main classes in terms of the main usage of distance map.
+Incorporating the distance Transform maps of image segmentation labels  into CNNs-based segmentation tasks has received significant attention in 2019. These methods can be classified into two main classes in terms of the main usage of distance transform maps.
 
 - Designing new loss functions
 - Adding an auxiliary task, e.g. distance map regression
 
-However, with these methods on the one hand and the diversity of the specific implementations and dataset-related challenges on the other, it's hard to figure out which design can generalize well beyond the experiments in the original papers. Up to now, there is still no comprehensive comparison among these methods.
+However, with these new methods on the one hand and the diversity of the specific implementations and dataset-related challenges on the other, it's hard to figure out which design can generalize well beyond the experiments in the original papers. Up to now, there is still no comprehensive comparison among these methods.
 
-In this repository,  we want to re-implement these methods and evaluate them on the same segmentation tasks (heart and liver tumor segmentation), so as to figure out the useful designs.
+In this repository,  we want to re-implement these methods (published in 2019) and evaluate them on the same segmentation tasks (heart and liver tumor segmentation), so as to figure out the useful designs.
 
 
 
