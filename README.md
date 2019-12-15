@@ -25,7 +25,6 @@ In this repository,  we want to re-implement these methods (published in 2019) a
 | 2019 | Yuan Xue  | Shape-Aware Organ Segmentation by Predicting Signed Distance Maps [(arxiv)](https://arxiv.org/abs/1912.03849) | None         | AAAI 2020  |
 | 2019 | [Hoel Kervadec](https://scholar.google.com.hk/citations?user=yeFGhfgAAAAJ&hl=zh-CN&oi=sra) | Boundary loss for highly unbalanced segmentation | [pytorch](https://github.com/LIVIAETS/surface-loss) | [MIDL 2019](http://proceedings.mlr.press/v102/kervadec19a.html) |     
 |2019|Davood Karimi|Reducing the Hausdorff Distance in Medical Image Segmentation with Convolutional Neural Networks [(arxiv)](https://arxiv.org/abs/1904.10030) |None|[TMI 2019](https://ieeexplore.ieee.org/document/8767031)|
-|2019|[Qikui Zhu](https://scholar.google.com.hk/citations?user=EhYbflYAAAAJ&hl=zh-CN&oi=sra)|Boundary-weighted Domain Adaptive Neural Network for Prostate MR Image Segmentation [(arxiv)](https://arxiv.org/abs/1902.08128)|[keras (incomplete)](https://github.com/ahukui/BOWDANet)|[TMI 2019](https://ieeexplore.ieee.org/document/8795525)|
 
 
 
