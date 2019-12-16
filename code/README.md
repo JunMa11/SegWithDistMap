@@ -5,6 +5,8 @@
 - scipy
 - tqdm
 
+**Note: the code is developed on ubuntu. I'm not sure whether it works on windows as I do not have a windows workstation.**
+
 
 ## Training
 ### V-Net
