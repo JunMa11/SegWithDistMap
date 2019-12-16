@@ -17,7 +17,7 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 
-from networks.vnet import VNet
+from networks.vnet_sdf import VNet
 from utils.losses import dice_loss
 from dataloaders.la_heart import LAHeart, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
 from scipy.ndimage import distance_transform_edt as distance
@@ -33,7 +33,7 @@ parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Trainin
 parser.add_argument('--exp', type=str,  default='vnet_sup_AAAISDF', help='model_name')
 parser.add_argument('--max_iterations', type=int,  default=5000, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=2, help='batch_size per gpu')
-parser.add_argument('--base_lr', type=float,  default=0.00001, help='maximum epoch number to train')
+parser.add_argument('--base_lr', type=float,  default=0.01, help='maximum epoch number to train')
 parser.add_argument('--deterministic', type=int,  default=1, help='whether use deterministic training')
 parser.add_argument('--seed', type=int,  default=1337, help='random seed')
 parser.add_argument('--gpu', type=str,  default='0', help='GPU to use')
@@ -102,21 +102,18 @@ def compute_sdf(img_gt, out_shape):
     return normalized_sdf
 
 def AAAI_sdf_loss(net_output, gt_sdm):
-    """
-    Re-implement Shape-Aware Organ Segmentation by Predicting Signed Distance Maps
-    https://arxiv.org/abs/1912.03849
-    """
     # print('net_output.shape, gt_sdm.shape', net_output.shape, gt_sdm.shape)
     smooth = 1e-5
     axes = tuple(range(1, len(net_output.size())))
+    # compute eq (4)
     intersect = sum_tensor(net_output * gt_sdm, axes, keepdim=False)
     pd_sum = sum_tensor(net_output ** 2, axes, keepdim=False)
     gt_sum = sum_tensor(gt_sdm ** 2, axes, keepdim=False)
     L_product = (intersect + smooth) / (intersect + pd_sum + gt_sum + + smooth)
     # print('L_product.shape', L_product.shape) (4,2)
     L_SDF_AAAI = - L_product.mean() + torch.norm(net_output - gt_sdm, 1)/torch.numel(net_output)
-    with torch.no_grad():
-        print(torch.max(net_output).cpu().numpy(), torch.max(gt_sdm).cpu().numpy(), L_SDF_AAAI.cpu().numpy())
+    # with torch.no_grad():
+    #     print('net_output.max, gt_sdm.max, L_SDF_AAAI: ',torch.max(net_output).cpu().numpy(), torch.max(gt_sdm).cpu().numpy(), L_SDF_AAAI.cpu().numpy())
 
     return L_SDF_AAAI
 
@@ -173,22 +170,34 @@ if __name__ == "__main__":
             volume_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             volume_batch, label_batch = volume_batch.cuda(), label_batch.cuda()
             out_dis = net(volume_batch)
-            if torch.isnan(out_dis).any():
-                print('net output has NAN!!!')
-                exit()
+            # the code works with sigmoid + Dice loss
+            # outputs_soft = F.sigmoid(out_dis) # for debug
+
+            with torch.no_grad():
+                check_outputs_soft = 1.0 / (1.0 + torch.exp(-1500*out_dis))
+                check_dice = dice_loss(check_outputs_soft[:, 0, :, :, :], label_batch == 1)
 
             with torch.no_grad():
                 gt_dis = compute_sdf(label_batch.cpu().numpy(), out_dis.shape)
                 print('np.max(gt_dis), np.min(gt_dis): ', np.max(gt_dis), np.min(gt_dis))
                 gt_dis = torch.from_numpy(gt_dis).float().cuda()
             
+            # When only using L1 Loss, the L1 loss decreases, 
+            # loss_sdf_l1 = torch.norm(out_dis - gt_dis, 1)/torch.numel(out_dis)
             loss_sdf_aaai = AAAI_sdf_loss(out_dis, gt_dis)
             outputs_soft = 1.0 / (1.0 + torch.exp(-1500*out_dis))
-            with torch.no_grad():
-                print('outputs_soft max and min: ', torch.max(outputs_soft.cpu()), torch.min(outputs_soft.cpu()))
+            # with torch.no_grad():
+                # dis2gt = 1.0 / (1.0 + torch.exp(-1500*gt_dis))
+                # print('check gt_dis: ', torch.max(dis2gt.cpu()), torch.min(dis2gt.cpu()))
+                # print(outputs_soft.shape, 'outputs_soft max and min: ', torch.max(outputs_soft.cpu()), torch.min(outputs_soft.cpu()))
+            # compute eq 
             loss_seg_dice = dice_loss(outputs_soft[:, 0, :, :, :], label_batch == 1)
+            # loss_seg_dice + 10.0 * loss_sdf_aaai
+            loss = loss_sdf_aaai   # adding loss_seg_dice causing NAN error.
 
-            loss = loss_sdf_aaai # Using loss_seg_dice + 10.0 * loss_sdf_aaai will cause Nan error!
+            if torch.isnan(out_dis).any():
+                print('net output has NAN!!!')
+                exit()
 
             optimizer.zero_grad()
             loss.backward()
@@ -196,19 +205,19 @@ if __name__ == "__main__":
 
             iter_num = iter_num + 1
             writer.add_scalar('lr', lr_, iter_num)
-            # writer.add_scalar('loss/loss_seg_ce', loss_seg, iter_num)
             writer.add_scalar('loss/loss_seg_dice', loss_seg_dice, iter_num)
             writer.add_scalar('loss/loss_sdf_aaai', loss_sdf_aaai, iter_num)
             writer.add_scalar('loss/loss', loss, iter_num)
+            writer.add_scalar('loss/check_dice', check_dice, iter_num)
             logging.info('iteration %d : loss_sdf_aaai : %f' % (iter_num, loss_sdf_aaai.item()))
             logging.info('iteration %d : dice_loss : %f' % (iter_num, loss_seg_dice.item()))
             logging.info('iteration %d : loss : %f' % (iter_num, loss.item()))
+            logging.info('iteration %d : check_dice : %f' % (iter_num, check_dice.item()))
             if iter_num % 2 == 0:
                 image = volume_batch[0, 0:1, :, :, 20:61:10].permute(3,0,1,2).repeat(1,3,1,1)
                 grid_image = make_grid(image, 5, normalize=True)
                 writer.add_image('train/Image', grid_image, iter_num)
 
-                # outputs_soft = F.softmax(outputs, 1)
                 image = outputs_soft[0, 0:1, :, :, 20:61:10].permute(3, 0, 1, 2).repeat(1, 3, 1, 1)
                 grid_image = make_grid(image, 5, normalize=False)
                 writer.add_image('train/Predicted_label', grid_image, iter_num)
