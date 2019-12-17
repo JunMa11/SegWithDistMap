@@ -19,13 +19,13 @@ from torchvision.utils import make_grid
 
 from networks.vnet import VNet
 from utils.losses import dice_loss
-from dataloaders.la_heart import LAHeart, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
+from dataloaders.livertumor import LiverTumor, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Training Set/', help='Name of Experiment')
-parser.add_argument('--exp', type=str,  default='vnet_supervisedonly', help='model_name')
-parser.add_argument('--max_iterations', type=int,  default=6000, help='maximum epoch number to train')
+parser.add_argument('--root_path', type=str, default='../data/LITS', help='Name of Experiment')
+parser.add_argument('--exp', type=str,  default='vnet_supervisedonly_dp', help='model_name')
+parser.add_argument('--max_iterations', type=int,  default=50000, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
 parser.add_argument('--base_lr', type=float,  default=0.01, help='maximum epoch number to train')
 parser.add_argument('--deterministic', type=int,  default=1, help='whether use deterministic training')
@@ -34,7 +34,7 @@ parser.add_argument('--gpu', type=str,  default='0', help='GPU to use')
 args = parser.parse_args()
 
 train_data_path = args.root_path
-snapshot_path = "../model_la/" + args.exp + "/"
+snapshot_path = "../model_lits/" + args.exp + "/"
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 batch_size = args.batch_size * len(args.gpu.split(','))
@@ -49,7 +49,7 @@ if args.deterministic:
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed(args.seed)
 
-patch_size = (112, 112, 80)
+patch_size = (96, 128, 160)
 num_classes = 2
 
 if __name__ == "__main__":
@@ -68,20 +68,19 @@ if __name__ == "__main__":
     net = VNet(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
     net = net.cuda()
 
-    db_train = LAHeart(base_dir=train_data_path,
+    db_train = LiverTumor(base_dir=train_data_path,
                        split='train',
-                       num=16,
                        transform = transforms.Compose([
                           RandomRotFlip(),
                           RandomCrop(patch_size),
                           ToTensor(),
                           ]))
-    db_test = LAHeart(base_dir=train_data_path,
-                       split='test',
-                       transform = transforms.Compose([
-                           CenterCrop(patch_size),
-                           ToTensor()
-                       ]))
+    # db_test = LiverTumor(base_dir=train_data_path,
+    #                    split='test',
+    #                    transform = transforms.Compose([
+    #                        CenterCrop(patch_size),
+    #                        ToTensor()
+    #                    ]))
     def worker_init_fn(worker_id):
         random.seed(args.seed+worker_id)
     trainloader = DataLoader(db_train, batch_size=batch_size, shuffle=True,  num_workers=4, pin_memory=True, worker_init_fn=worker_init_fn)
@@ -89,7 +88,7 @@ if __name__ == "__main__":
     net.train()
     optimizer = optim.SGD(net.parameters(), lr=base_lr, momentum=0.9, weight_decay=0.0001)
 
-    writer = SummaryWriter(snapshot_path+'/log')
+    writer = SummaryWriter(snapshot_path+'/log', flush_secs=2)
     logging.info("{} itertations per epoch".format(len(trainloader)))
 
     iter_num = 0
@@ -105,10 +104,10 @@ if __name__ == "__main__":
             volume_batch, label_batch = volume_batch.cuda(), label_batch.cuda()
             outputs = net(volume_batch)
 
-            loss_seg = F.cross_entropy(outputs, label_batch)
+            loss_ce = F.cross_entropy(outputs, label_batch)
             outputs_soft = F.softmax(outputs, dim=1)
             loss_seg_dice = dice_loss(outputs_soft[:, 1, :, :, :], label_batch == 1)
-            loss = 0.5*(loss_seg+loss_seg_dice)
+            loss = loss_ce+loss_seg_dice
 
             optimizer.zero_grad()
             loss.backward()
@@ -116,21 +115,22 @@ if __name__ == "__main__":
 
             iter_num = iter_num + 1
             writer.add_scalar('lr', lr_, iter_num)
-            writer.add_scalar('loss/loss_seg', loss_seg, iter_num)
+            writer.add_scalar('loss/loss_ce', loss_ce, iter_num)
             writer.add_scalar('loss/loss_seg_dice', loss_seg_dice, iter_num)
             writer.add_scalar('loss/loss', loss, iter_num)
+            logging.info('iteration %d : loss_seg_dice : %f' % (iter_num, loss_seg_dice.item()))
             logging.info('iteration %d : loss : %f' % (iter_num, loss.item()))
-            if iter_num % 50 == 0:
-                image = volume_batch[0, 0:1, :, :, 20:61:10].permute(3,0,1,2).repeat(1,3,1,1)
+            if iter_num % 2 == 0:
+                image = volume_batch[0, 0:1, 30:71:10, :, :].permute(1, 0, 2, 3).repeat(1,3,1,1)
                 grid_image = make_grid(image, 5, normalize=True)
                 writer.add_image('train/Image', grid_image, iter_num)
 
                 outputs_soft = F.softmax(outputs, 1)
-                image = outputs_soft[0, 1:2, :, :, 20:61:10].permute(3, 0, 1, 2).repeat(1, 3, 1, 1)
+                image = outputs_soft[0, 1:2, 30:71:10, :, :].permute(1, 0, 2, 3).repeat(1, 3, 1, 1)
                 grid_image = make_grid(image, 5, normalize=False)
                 writer.add_image('train/Predicted_label', grid_image, iter_num)
 
-                image = label_batch[0, :, :, 20:61:10].unsqueeze(0).permute(3, 0, 1, 2).repeat(1, 3, 1, 1)
+                image = label_batch[0, 30:71:10, :, :].unsqueeze(0).permute(1, 0, 2, 3).repeat(1, 3, 1, 1)
                 grid_image = make_grid(image, 5, normalize=False)
                 writer.add_image('train/Groundtruth_label', grid_image, iter_num)
 
