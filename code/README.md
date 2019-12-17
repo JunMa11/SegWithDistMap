@@ -5,12 +5,22 @@
 - scipy
 - tqdm
 
-**Note: the code is developed on ubuntu. I'm not sure whether it works on windows as I do not have a windows workstation.**
+**Note: the code has been tested on ubuntu. I'm not sure whether it works on windows.**
 
 
 ## Training
 ### V-Net
-run `python train_LA.py`
+- LA Heart MRI dataset: run `python train_LA.py`
+- Liver tumor CT dataset: run `python train_LITS.py`
+
+
+## Testing
+### Testing V-Net
+- LA heart MRI dataset: run `python test_LA.py`
+- Liver tumor CT dataset: run `python test_LITS.py`
+
+
+## Following methods are ongoing! They do not work now!
 
 ### V-Net with [Signed distance maps](https://arxiv.org/abs/1912.03849)
 > Xue et al. Shape-Aware Organ Segmentation by Predicting Signed Distance Maps [arxiv](https://arxiv.org/abs/1912.03849)
@@ -27,10 +37,6 @@ run `python train_LA_Fore_Dist.py`
 ### V-Net with sighed distance function regression
 run `python train_LA_SDF.py`
 
-## Testing
-### Testing V-Net
-run
-`python test_LA.py`
 
 ### Testing V-Net with various distance maps
 run
