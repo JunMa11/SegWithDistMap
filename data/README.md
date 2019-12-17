@@ -1,3 +1,4 @@
-Download data [here](https://pan.baidu.com/s/1ZTqv38jXuz6O0UFRLOaI6Q).
+- Download heart MRI data [here](https://pan.baidu.com/s/1ZTqv38jXuz6O0UFRLOaI6Q). Password：5dqz 
+- Download liver tumor CT data [here](https://pan.baidu.com/s/1YzM1i0ZaZa5NaUdaSJlz5A). Password: g3fz 
 
-Password：5dqz 
+> All the data have been converted to `h5` format.
