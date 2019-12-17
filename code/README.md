@@ -13,6 +13,18 @@
 - LA Heart MRI dataset: run `python train_LA.py`
 - Liver tumor CT dataset: run `python train_LITS.py`
 
+### V-Net with boundary loss
+- LA Heart MRI dataset: run `python train_LA_BD.py`
+- Liver tumor CT dataset: run `python train_LITS_BD.py`
+
+> You need to set `--exp` properly. Both [compute_sdf](https://github.com/JunMa11/SegWithDistMap/blob/ed55b65889a4ba4cf9f7532e63124fe9ba10fcf0/code/train_LA_BD.py#L94) and [compute_sdf1_1](https://github.com/JunMa11/SegWithDistMap/blob/ed55b65889a4ba4cf9f7532e63124fe9ba10fcf0/code/train_LA_BD.py#L63) are worth to try.
+
+### V-Net with hausdorff distance loss
+- LA Heart MRI dataset: run `python train_LA_HD.py`
+- Liver tumor CT dataset: run `python train_LITS_HD.py`
+
+> You need to set `--exp` properly. Both [compute_dtm](https://github.com/JunMa11/SegWithDistMap/blob/ed55b65889a4ba4cf9f7532e63124fe9ba10fcf0/code/train_LA_HD.py#L86) and [compute_dtm01](https://github.com/JunMa11/SegWithDistMap/blob/ed55b65889a4ba4cf9f7532e63124fe9ba10fcf0/code/train_LA_HD.py#LL63) are worth to try.
+
 
 ## Testing
 ### Testing V-Net
