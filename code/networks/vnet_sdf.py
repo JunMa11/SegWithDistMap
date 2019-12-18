@@ -232,7 +232,7 @@ class VNet(nn.Module):
             x9 = self.dropout(x9)
         out = self.out_conv(x9)
         out_tanh = self.tanh(out)
-        return out
+        return out_tanh
 
 
     def forward(self, input, turnoff_drop=False):
