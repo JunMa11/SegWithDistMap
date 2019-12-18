@@ -158,18 +158,18 @@ if __name__ == "__main__":
                 gt_dis = compute_sdf(label_batch.cpu().numpy(), out_dis.shape)
                 # print('np.max(gt_dis), np.min(gt_dis): ', np.max(gt_dis), np.min(gt_dis))
                 gt_dis = torch.from_numpy(gt_dis).float().cuda()
-                gt_dis_prob = 1.0 / (1.0 + torch.exp(-1500*gt_dis))
+                gt_dis_prob = 1.0 / (1.0 + torch.exp(1500*gt_dis))
                 gt_dis_dice = dice_loss(gt_dis_prob[:, 0, :, :, :], label_batch == 1)
-                # gt_dis_dice should be >= 0.95, which means the pre-computed SDF is right.
-                print('check gt_dis; dice = ', gt_dis_dice.cpu().numpy())
+                # gt_dis_dice loss should be <= 0.05 (Dice Score>0.95), which means the pre-computed SDF is right.
+                print('check gt_dis; dice score = ', 1 - gt_dis_dice.cpu().numpy())
 
             loss_l1 = torch.norm(out_dis - gt_dis, 1)/torch.numel(out_dis)
             # SDF Prediction -> heaviside function [0,1] -> Dice loss
-            outputs_soft = 1.0 / (1.0 + torch.exp(-1500*out_dis))
+            outputs_soft = 1.0 / (1.0 + torch.exp(1500*out_dis))
             loss_dice = dice_loss(outputs_soft[:, 0, :, :, :], label_batch == 1)
             # there are two branches in this paper (Fig. 2). one branch goes to L1 loss and the other goes to L_Dice
             # however, if adding L_Dice, NAN error will occurred during training
-            loss = loss_l1 # + loss_dice
+            loss = loss_l1 + loss_dice
 
             if torch.isnan(out_dis).any():
                 print('net output has NAN!!!')
