@@ -141,7 +141,7 @@ if __name__ == "__main__":
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
     logging.info(str(args))
 
-    net = VNet(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
+    net = VNet(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=False)
     net = net.cuda()
 
     db_train = LiverTumor(base_dir=train_data_path,
