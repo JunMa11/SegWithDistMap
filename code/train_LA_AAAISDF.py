@@ -18,6 +18,7 @@ from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 
 from networks.vnet_sdf import VNet
+from utils.losses import dice_loss
 from dataloaders.la_heart import LAHeart, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
 from scipy.ndimage import distance_transform_edt as distance
 from skimage import segmentation as skimage_seg
@@ -29,10 +30,10 @@ Train vnet to regress the signed distance map
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Training Set/', help='Name of Experiment')
-parser.add_argument('--exp', type=str,  default='vnet_dp_la_AAAISDFL1', help='model_name')
+parser.add_argument('--exp', type=str,  default='vnet_la_SDFProdPlusL1', help='model_name')
 parser.add_argument('--max_iterations', type=int,  default=10000, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
-parser.add_argument('--base_lr', type=float,  default=0.001, help='maximum epoch number to train')
+parser.add_argument('--base_lr', type=float,  default=0.01, help='maximum epoch number to train')
 parser.add_argument('--deterministic', type=int,  default=1, help='whether use deterministic training')
 parser.add_argument('--seed', type=int,  default=2019, help='random seed')
 parser.add_argument('--gpu', type=str,  default='0', help='GPU to use')
@@ -56,16 +57,6 @@ if args.deterministic:
 
 patch_size = (112, 112, 80)
 num_classes = 2
-
-def dice_loss(score, target):
-    target = target.float()
-    smooth = 1e-5
-    intersect = torch.sum(score * target)
-    y_sum = torch.sum(target * target)
-    z_sum = torch.sum(score * score)
-    loss = (2 * intersect + smooth) / (z_sum + y_sum + smooth)
-    loss = 1 - loss
-    return loss
 
 def compute_sdf(img_gt, out_shape):
     """
@@ -98,7 +89,19 @@ def compute_sdf(img_gt, out_shape):
 
     return normalized_sdf
 
+def AAAI_sdf_loss(net_output, gt_sdm):
+    # print('net_output.shape, gt_sdm.shape', net_output.shape, gt_sdm.shape)
+    # ([4, 1, 112, 112, 80])
+    smooth = 1e-5
+    # compute eq (4)
+    intersect = torch.sum(net_output * gt_sdm)
+    pd_sum = torch.sum(net_output ** 2)
+    gt_sum = torch.sum(gt_sdm ** 2)
+    L_product = (intersect + smooth) / (intersect + pd_sum + gt_sum + smooth)
+    # print('L_product.shape', L_product.shape) (4,2)
+    L_SDF_AAAI = - L_product + torch.norm(net_output - gt_sdm, 1)/torch.numel(net_output)
 
+    return L_SDF_AAAI
 
 
 if __name__ == "__main__":
@@ -116,6 +119,7 @@ if __name__ == "__main__":
     # num_class -1: only output foreground channel
     net = VNet(n_channels=1, n_classes=num_classes-1, normalization='batchnorm', has_dropout=True)
     net = net.cuda()
+
 
     db_train = LAHeart(base_dir=train_data_path,
                        split='train',
@@ -148,30 +152,26 @@ if __name__ == "__main__":
             volume_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             volume_batch, label_batch = volume_batch.cuda(), label_batch.cuda()
             out_dis = net(volume_batch)
-            # the code works with sigmoid + Dice loss
-            # outputs_soft = F.sigmoid(out_dis) # for debug
+            # writer.add_graph(net, volume_batch)
 
             # compute L1 loss between SDF Prediction and GT_SDF
             with torch.no_grad():
                 gt_dis = compute_sdf(label_batch.cpu().numpy(), out_dis.shape)
                 # print('np.max(gt_dis), np.min(gt_dis): ', np.max(gt_dis), np.min(gt_dis))
                 gt_dis = torch.from_numpy(gt_dis).float().cuda()
-                gt_dis_prob = 1.0 / (1.0 + torch.exp(1500*gt_dis))
+                gt_dis_prob = torch.sigmoid(-1500*gt_dis)
                 gt_dis_dice = dice_loss(gt_dis_prob[:, 0, :, :, :], label_batch == 1)
                 # gt_dis_dice loss should be <= 0.05 (Dice Score>0.95), which means the pre-computed SDF is right.
                 print('check gt_dis; dice score = ', 1 - gt_dis_dice.cpu().numpy())
 
-            loss_l1 = torch.norm(out_dis - gt_dis, 1)/torch.numel(out_dis)
+            
+            # compute product and L1 loss between SDF Prediction and GT_SDF
+            loss_sdf_aaai = AAAI_sdf_loss(out_dis, gt_dis)
             # SDF Prediction -> heaviside function [0,1] -> Dice loss
-            # outputs_soft = 1.0 / (1.0 + torch.exp(1500*out_dis)) # will cause NAN Error!
             outputs_soft = torch.sigmoid(-1500*out_dis)
-            loss_dice = dice_loss(outputs_soft[:, 0, :, :, :], label_batch == 1)
+            loss_seg_dice = dice_loss(outputs_soft[:, 0, :, :, :], label_batch == 1)
 
-            loss = loss_l1 + loss_dice
-
-            if torch.isnan(out_dis).any():
-                print('net output has NAN!!!')
-                exit()
+            loss = loss_sdf_aaai + 10 * loss_sdf_aaai   # lambda=10 in this paper
 
             optimizer.zero_grad()
             loss.backward()
@@ -179,12 +179,13 @@ if __name__ == "__main__":
 
             iter_num = iter_num + 1
             writer.add_scalar('lr', lr_, iter_num)
+            writer.add_scalar('loss/loss_seg_dice', loss_seg_dice, iter_num)
+            writer.add_scalar('loss/loss_sdf_aaai', loss_sdf_aaai, iter_num)
             writer.add_scalar('loss/loss', loss, iter_num)
-            writer.add_scalar('loss/loss_l1', loss_l1, iter_num)
-            writer.add_scalar('loss/loss_dice', loss_dice, iter_num)
-
+            logging.info('iteration %d : loss_sdf_aaai : %f' % (iter_num, loss_sdf_aaai.item()))
+            logging.info('iteration %d : dice_loss : %f' % (iter_num, loss_seg_dice.item()))
             logging.info('iteration %d : loss : %f' % (iter_num, loss.item()))
-            logging.info('iteration %d : loss_dice : %f' % (iter_num, loss_dice))
+
             if iter_num % 2 == 0:
                 image = volume_batch[0, 0:1, :, :, 20:61:10].permute(3,0,1,2).repeat(1,3,1,1)
                 grid_image = make_grid(image, 5, normalize=True)
