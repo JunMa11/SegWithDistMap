@@ -26,6 +26,9 @@ from skimage import segmentation as skimage_seg
 
 """
 Train vnet to regress the signed distance map
+Ref:
+Shape-Aware Organ Segmentation by Predicting Signed Distance Maps
+https://arxiv.org/abs/1912.03849
 """
 
 parser = argparse.ArgumentParser()
