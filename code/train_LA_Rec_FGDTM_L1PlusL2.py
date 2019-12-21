@@ -17,25 +17,21 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 
-from networks.vnet_multi_head import VNetMultiHead
+from networks.vnet_rec import VNetRec
 from dataloaders.la_heart import LAHeart, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
 from scipy.ndimage import distance_transform_edt as distance
 
 
 """
-Train a multi-head vnet to output 
-1) predicted segmentation
-2) regress the distance transform map 
-e.g.
-Deep Distance Transform for Tubular Structure Segmentation in CT Scans
-https://arxiv.org/abs/1912.03383
-Shape-Aware Complementary-Task Learning for Multi-Organ Segmentation
-https://arxiv.org/abs/1908.05099
+Adding reconstruction branch to V-Net
+Ref:
+A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation
+https://arxiv.org/abs/1901.01238
 """
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Training Set/', help='Name of Experiment')
-parser.add_argument('--exp', type=str,  default='vnet_dp_la_MH_FGDTM_L1PlusL2', help='model_name;dp:add dropout; MH:multi-head')
+parser.add_argument('--exp', type=str,  default='vnet_dp_la_Rec_FGDTM_L1PlusL2', help='model_name;dp:add dropout; Rec:Reconstruction')
 parser.add_argument('--max_iterations', type=int,  default=10000, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
 parser.add_argument('--base_lr', type=float,  default=0.01, help='maximum epoch number to train')
@@ -107,7 +103,7 @@ if __name__ == "__main__":
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
     logging.info(str(args))
 
-    net = VNetMultiHead(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
+    net = VNetRec(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
     net = net.cuda()
 
     db_train = LAHeart(base_dir=train_data_path,

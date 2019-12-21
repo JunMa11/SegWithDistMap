@@ -17,25 +17,21 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 
-from networks.vnet_multi_head import VNetMultiHead
+from networks.vnet_rec import VNetRec
 from dataloaders.la_heart import LAHeart, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
 from scipy.ndimage import distance_transform_edt as distance
-
+from skimage import segmentation as skimage_seg
 
 """
-Train a multi-head vnet to output 
-1) predicted segmentation
-2) regress the distance transform map 
-e.g.
-Deep Distance Transform for Tubular Structure Segmentation in CT Scans
-https://arxiv.org/abs/1912.03383
-Shape-Aware Complementary-Task Learning for Multi-Organ Segmentation
-https://arxiv.org/abs/1908.05099
+Adding reconstruction branch to V-Net
+Ref:
+A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation
+https://arxiv.org/abs/1901.01238
 """
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Training Set/', help='Name of Experiment')
-parser.add_argument('--exp', type=str,  default='vnet_dp_la_MH_FGDTM_L1PlusL2', help='model_name;dp:add dropout; MH:multi-head')
+parser.add_argument('--exp', type=str,  default='vnet_dp_la_Rec_SDF_L1', help='model_name;dp:add dropout; Rec:reconstruction')
 parser.add_argument('--max_iterations', type=int,  default=10000, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
 parser.add_argument('--base_lr', type=float,  default=0.01, help='maximum epoch number to train')
@@ -73,26 +69,36 @@ def dice_loss(score, target):
     loss = 1 - loss
     return loss
 
-def compute_dtm(img_gt, out_shape):
+def compute_sdf(img_gt, out_shape):
     """
-    compute the distance transform map of foreground in binary mask
-    input: segmentation, shape = (batch_size, x, y, z)
-    output: the foreground Distance Map (SDM) 
-    dtm(x) = 0; x in segmentation boundary
-             inf|x-y|; x in segmentation
+    compute the signed distance map of binary mask
+    input: segmentation, shape = (batch_size,c, x, y, z)
+    output: the Signed Distance Map (SDM) 
+    sdf(x) = 0; x in segmentation boundary
+             -inf|x-y|; x in segmentation
+             +inf|x-y|; x out of segmentation
+    normalize sdf to [-1,1]
+
     """
-    fg_dtm = np.zeros(out_shape)
+
+    img_gt = img_gt.astype(np.uint8)
+    normalized_sdf = np.zeros(out_shape)
 
     for b in range(out_shape[0]): # batch size
         for c in range(out_shape[1]):
             posmask = img_gt[b].astype(np.bool)
             if posmask.any():
+                negmask = ~posmask
                 posdis = distance(posmask)
-                fg_dtm[b][c] = posdis
+                negdis = distance(negmask)
+                boundary = skimage_seg.find_boundaries(posmask, mode='inner').astype(np.uint8)
+                sdf = (negdis-np.min(negdis))/(np.max(negdis)-np.min(negdis)) - (posdis-np.min(posdis))/(np.max(posdis)-np.min(posdis))
+                sdf[boundary==1] = 0
+                normalized_sdf[b][c] = sdf
+                assert np.min(sdf) == -1.0, print(np.min(posdis), np.max(posdis), np.min(negdis), np.max(negdis))
+                assert np.max(sdf) ==  1.0, print(np.min(posdis), np.min(negdis), np.max(posdis), np.max(negdis))
 
-    return fg_dtm
-
-
+    return normalized_sdf
 
 if __name__ == "__main__":
     ## make logger file
@@ -107,7 +113,7 @@ if __name__ == "__main__":
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
     logging.info(str(args))
 
-    net = VNetMultiHead(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
+    net = VNetRec(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
     net = net.cuda()
 
     db_train = LAHeart(base_dir=train_data_path,
@@ -139,17 +145,18 @@ if __name__ == "__main__":
             volume_batch, label_batch = sampled_batch['image'], sampled_batch['label']
             volume_batch, label_batch = volume_batch.cuda(), label_batch.cuda()
             outputs, out_dis = net(volume_batch)
+            out_dis = torch.tanh(out_dis)
 
             with torch.no_grad():
-                gt_dis = compute_dtm(label_batch.cpu().numpy(), out_dis.shape)
+                gt_dis = compute_sdf(label_batch.cpu().numpy(), out_dis.shape)
                 gt_dis = torch.from_numpy(gt_dis).float().cuda()
 
             # compute CE + Dice loss
             loss_ce = F.cross_entropy(outputs, label_batch)
             outputs_soft = F.softmax(outputs, dim=1)
             loss_dice = dice_loss(outputs_soft[:, 1, :, :, :], label_batch == 1)
-            # compute L1 + L2 Loss
-            loss_dist = torch.norm(out_dis-gt_dis, 1)/torch.numel(out_dis) + F.mse_loss(out_dis, gt_dis)
+            # compute L1 Loss
+            loss_dist = torch.norm(out_dis-gt_dis, 1)/torch.numel(out_dis)
 
             loss = loss_ce + loss_dice + loss_dist
 

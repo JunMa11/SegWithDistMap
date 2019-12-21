@@ -85,7 +85,7 @@ def compute_dtm(img_gt, out_shape):
     fg_dtm = np.zeros(out_shape)
 
     for b in range(out_shape[0]): # batch size
-        for c in range(1, out_shape[1]):
+        for c in range(out_shape[1]):
             posmask = img_gt[b].astype(np.bool)
             if posmask.any():
                 posdis = distance(posmask)
@@ -150,9 +150,9 @@ if __name__ == "__main__":
             outputs_soft = F.softmax(outputs, dim=1)
             loss_dice = dice_loss(outputs_soft[:, 1, :, :, :], label_batch == 1)
             # compute L1 Loss
-            dist_mse = torch.norm(out_dis-gt_dis, 1)/torch.numel(out_dis)
+            loss_dist = torch.norm(out_dis-gt_dis, 1)/torch.numel(out_dis)
 
-            loss = loss_ce + loss_dice + dist_mse
+            loss = loss_ce + loss_dice + loss_dist
 
             optimizer.zero_grad()
             loss.backward()
@@ -162,9 +162,9 @@ if __name__ == "__main__":
             writer.add_scalar('lr', lr_, iter_num)
             writer.add_scalar('loss/loss_ce', loss_ce, iter_num)
             writer.add_scalar('loss/loss_dice', loss_dice, iter_num)
-            writer.add_scalar('loss/loss_mse', dist_mse, iter_num)
+            writer.add_scalar('loss/loss_dist', loss_dist, iter_num)
             writer.add_scalar('loss/loss', loss, iter_num)
-            logging.info('iteration %d : loss_mse : %f' % (iter_num, dist_mse.item()))
+            logging.info('iteration %d : loss_dist : %f' % (iter_num, loss_dist.item()))
             logging.info('iteration %d : loss_dice : %f' % (iter_num, loss_dice.item()))
             logging.info('iteration %d : loss : %f' % (iter_num, loss.item()))
             if iter_num % 2 == 0:

@@ -17,25 +17,21 @@ import torch.backends.cudnn as cudnn
 from torch.utils.data import DataLoader
 from torchvision.utils import make_grid
 
-from networks.vnet_multi_head import VNetMultiHead
+from networks.vnet_rec import VNetRec
 from dataloaders.la_heart import LAHeart, RandomCrop, CenterCrop, RandomRotFlip, ToTensor, TwoStreamBatchSampler
 from scipy.ndimage import distance_transform_edt as distance
 
 
 """
-Train a multi-head vnet to output 
-1) predicted segmentation
-2) regress the distance transform map 
-e.g.
-Deep Distance Transform for Tubular Structure Segmentation in CT Scans
-https://arxiv.org/abs/1912.03383
-Shape-Aware Complementary-Task Learning for Multi-Organ Segmentation
-https://arxiv.org/abs/1908.05099
+Adding reconstruction branch to V-Net
+Ref:
+A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation
+https://arxiv.org/abs/1901.01238
 """
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Training Set/', help='Name of Experiment')
-parser.add_argument('--exp', type=str,  default='vnet_dp_la_MH_FGDTM_L1PlusL2', help='model_name;dp:add dropout; MH:multi-head')
+parser.add_argument('--exp', type=str,  default='vnet_dp_la_Rec_FGDTM_L1', help='model_name;dp:add dropout; Rec:Reconstruction')
 parser.add_argument('--max_iterations', type=int,  default=10000, help='maximum epoch number to train')
 parser.add_argument('--batch_size', type=int, default=4, help='batch_size per gpu')
 parser.add_argument('--base_lr', type=float,  default=0.01, help='maximum epoch number to train')
@@ -107,7 +103,7 @@ if __name__ == "__main__":
     logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
     logging.info(str(args))
 
-    net = VNetMultiHead(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
+    net = VNetRec(n_channels=1, n_classes=num_classes, normalization='batchnorm', has_dropout=True)
     net = net.cuda()
 
     db_train = LAHeart(base_dir=train_data_path,
@@ -142,14 +138,19 @@ if __name__ == "__main__":
 
             with torch.no_grad():
                 gt_dis = compute_dtm(label_batch.cpu().numpy(), out_dis.shape)
+                # debug: check distance map
+                # import matplotlib.pyplot as plt 
+                # plt.figure()
+                # plt.imshow(gt_dis[0,0,:,:,40]); plt.axis('off'); plt.colorbar() 
+                # plt.show()
                 gt_dis = torch.from_numpy(gt_dis).float().cuda()
 
             # compute CE + Dice loss
             loss_ce = F.cross_entropy(outputs, label_batch)
             outputs_soft = F.softmax(outputs, dim=1)
             loss_dice = dice_loss(outputs_soft[:, 1, :, :, :], label_batch == 1)
-            # compute L1 + L2 Loss
-            loss_dist = torch.norm(out_dis-gt_dis, 1)/torch.numel(out_dis) + F.mse_loss(out_dis, gt_dis)
+            # compute L1 Loss
+            loss_dist = torch.norm(out_dis-gt_dis, 1)/torch.numel(out_dis)
 
             loss = loss_ce + loss_dice + loss_dist
 
@@ -181,11 +182,11 @@ if __name__ == "__main__":
                 writer.add_image('train/Groundtruth_label', grid_image, iter_num)
 
                 out_dis_slice = out_dis[0, 0, :, :, 20:61:10].unsqueeze(0).permute(3, 0, 1, 2).repeat(1, 3, 1, 1)
-                grid_image = make_grid(out_dis_slice, 5, normalize=False)
+                grid_image = make_grid(out_dis_slice, 5, normalize=True)
                 writer.add_image('train/out_dis_map', grid_image, iter_num)
 
                 gt_dis_slice = gt_dis[0, 0,:, :, 20:61:10].unsqueeze(0).permute(3, 0, 1, 2).repeat(1, 3, 1, 1)
-                grid_image = make_grid(gt_dis_slice, 5, normalize=False)
+                grid_image = make_grid(gt_dis_slice, 5, normalize=True)
                 writer.add_image('train/gt_dis_map', grid_image, iter_num)
             ## change lr
             if iter_num % 2500 == 0:
