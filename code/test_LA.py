@@ -8,11 +8,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--root_path', type=str, default='../data/2018LA_Seg_Training Set/', help='Name of Experiment')
 parser.add_argument('--model', type=str,  default='vnet_supervisedonly_dp', help='model_name')
 parser.add_argument('--gpu', type=str,  default='0', help='GPU to use')
+parser.add_argument('--epoch_num', type=int,  default='6000', help='checkpoint to use')
 FLAGS = parser.parse_args()
 
 os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu
-snapshot_path = "../model/"+FLAGS.model+"/" 
-test_save_path = "../model/prediction/"+FLAGS.model+"_post/"
+snapshot_path = "../model_la/"+FLAGS.model+"/" 
+test_save_path = "../model_la/prediction/"+FLAGS.model+"_post/"
 if not os.path.exists(test_save_path):
     os.makedirs(test_save_path)
 
@@ -38,5 +39,5 @@ def test_calculate_metric(epoch_num):
 
 
 if __name__ == '__main__':
-    metric = test_calculate_metric(5000)
+    metric = test_calculate_metric(FLAGS.epoch_num)
     # print(metric)
