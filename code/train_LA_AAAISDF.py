@@ -174,7 +174,7 @@ if __name__ == "__main__":
             outputs_soft = torch.sigmoid(-1500*out_dis)
             loss_seg_dice = dice_loss(outputs_soft[:, 0, :, :, :], label_batch == 1)
 
-            loss = loss_sdf_aaai + 10 * loss_sdf_aaai   # lambda=10 in this paper
+            loss = loss_seg_dice + 10 * loss_sdf_aaai   # lambda=10 in this paper
 
             optimizer.zero_grad()
             loss.backward()
