@@ -14,6 +14,28 @@ However, with these new methods on the one hand and the diversity of the specifi
 
 In this repository,  we want to re-implement these methods (published in 2019) and evaluate them on the same 3D segmentation tasks (heart and liver tumor segmentation), so as to figure out the useful designs.
 
+## Experiments
+
+| Task                                   | LA Contributor  | GPU        | LiTS Contributor  | GPU        |
+| -------------------------------------- | ------------- | ---------- | ------------ | ---------- |
+| Boundary loss                          | [Yiwen Zhang](https://github.com/whisney) | 2080ti     | [Mengzhang Li](https://github.com/MengzhangLI) | TITIAN RTX |
+| Hausdorff loss                         | [Yiwen Zhang](https://github.com/whisney)  | 2080ti     | [Mengzhang Li](https://github.com/MengzhangLI) | TITIAN RTX |
+| Signed  distance map loss (AAAI 2020)  | [Zhan Wei](https://github.com/zhanwei33)      | 1080ti     | cancel       | -          |
+| Multi-Head: FG  DTM regression-L1      | [Yiwen Zhang](https://github.com/whisney)   | 2080ti     | cancel       | -          |
+| Multi-Head: FG  DTM regression-L2      | [Jianan Liu]()    | 2080ti     | cancel       | -          |
+| Multi-Head: FG  DTM regression-L1 + L2 | [Gaoxiang Chen](https://github.com/AMSTLHX) | 2080ti     | cancel       | -          |
+| Multi-Head:  SDF regression-L1         | [Feng Cheng](836155475@qq.com)   | TITAN X    | [Chao Peng](https://github.com/AMSTLHX)    | TITAN RTX  |
+| Multi-Head:  SDF regression-L2         | [Rongfei Lv](https://github.com/lrfdl)    | TITAN RTX  | [Rongfei Lv](https://github.com/lrfdl)   | TITAN RTX  |
+| Multi-Head:  SDF regression-L1+L2      | [Yixin Wang](https://github.com/Wangyixinxin)    | P100       | cancel       | -          |
+| Add-Branch: FG  DTM regression-L1      | [Yaliang Zhao](441926980)  | TITAN RTX  | cancel       | -          |
+| Add-Branch: FG  DTM regression-L2      | [Mengzhang Li](https://github.com/MengzhangLI)  | TITIAN RTX | cancel       | -          |
+| Add-Branch: FG  DTM regression-L1+L2   | [Yixin Wang](https://github.com/Wangyixinxin)    | P100       | cancel       | -          |
+| Add-Branch:  SDF regression-L1         | [Feng Cheng](836155475@qq.com)    | TITAN X    | [Yixin Wang](https://github.com/Wangyixinxin)   | TITAN RTX  |
+| Add-Branch:  SDF regression-L2         | [Feng Cheng](836155475@qq.com)    | TITAN X    | [Yixin Wang](https://github.com/Wangyixinxin)   | P100       |
+| Add-Branch:  SDF regression-L1+L2      | [Yixin Wang](https://github.com/Wangyixinxin)    | P100       | [Yunpeng Wang]() | TITAN  XP  |
+
+> Trained modles can be downloaded [here](https://pan.baidu.com/s/1E9SlHw4DXuvsqFQRD_HHag) (pw:mgn0).
+
 
 
 ## Related Work in 2019
@@ -37,14 +59,10 @@ In this repository,  we want to re-implement these methods (published in 2019) a
 |2019|[Fernando Navarro](https://scholar.google.com.hk/citations?user=rRKrhrwAAAAJ&hl=zh-CN&oi=sra)|Shape-Aware Complementary-Task Learning for Multi-organ Segmentation [(arxiv)](https://arxiv.org/abs/1908.05099)|None| [MICCAI MLMI 2019](https://link.springer.com/chapter/10.1007/978-3-030-32692-0_71)|
 
 
+## Acknowledgments
 
-
-The code of this repo is adapted from the following great repos.
-
-- [nnUNet-Fabian](https://github.com/MIC-DKFZ/nnUNet)
-> The most powerful U-Net implementation.
-
-- [UAMT-Lequan Yu](https://github.com/yulequan/UA-MT)
-> The code is very friendly for pytorch beginners.
-
+The authors would like to thank the organization team of MICCAI 2017 liver tumor segmentation challenge MICCAI 2018 and left atrial segmentation challenge for the publicly available dataset. 
+We also thank the reviewers for their valuable comments and suggestions. 
+We appreciate Cheng Chen,  Feng Cheng, Mengzhang Li, Chengwei Su, Chengfeng Zhou and Yaliang Zhao to help us finish some experiments.
+Last but not least, we thank Lequan Yu for his great PyTorch implementation of [V-Net](https://github.com/yulequan/UA-MT) and Fabian Isensee for his great PyTorch implementation of [nnU-Net](https://github.com/MIC-DKFZ/nnUNett).
 
