@@ -42,7 +42,7 @@ In this repository,  we want to re-implement these methods (published in 2019) a
 
 | Date | First author  | Title                       | Official Code  | Publication                    |
 | ---- | ------------- | --------------------------- | -------------- | ------------------------------ |
-| 2019 | Yuan Xue  | Shape-Aware Organ Segmentation by Predicting Signed Distance Maps [(arxiv)](https://arxiv.org/abs/1912.03849) | None         | AAAI 2020  |
+| 2019 | Yuan Xue  | Shape-Aware Organ Segmentation by Predicting Signed Distance Maps | None         | [AAAI 2020](https://www.aaai.org/Papers/AAAI/2020GB/AAAI-XueY.1482.pdf)  |
 | 2019 | [Hoel Kervadec](https://scholar.google.com.hk/citations?user=yeFGhfgAAAAJ&hl=zh-CN&oi=sra) | Boundary loss for highly unbalanced segmentation | [pytorch](https://github.com/LIVIAETS/surface-loss) | [MIDL 2019](http://proceedings.mlr.press/v102/kervadec19a.html) |     
 |2019|Davood Karimi|Reducing the Hausdorff Distance in Medical Image Segmentation with Convolutional Neural Networks [(arxiv)](https://arxiv.org/abs/1904.10030) |None|[TMI 2019](https://ieeexplore.ieee.org/document/8767031)|
 
@@ -52,7 +52,7 @@ In this repository,  we want to re-implement these methods (published in 2019) a
 
 | Date | First author  | Title                       | Official Code  | Publication                    |
 | ---- | ------------- | --------------------------- | -------------- | ------------------------------ |
-| 2019 | Yan Wang     | Deep Distance Transform for Tubular Structure Segmentation in CT Scans | None | [arxiv](https://arxiv.org/abs/1912.03383) |
+| 2019 | Yan Wang     | Deep Distance Transform for Tubular Structure Segmentation in CT Scans | None | [CVPR2020](http://openaccess.thecvf.com/content_CVPR_2020/html/Wang_Deep_Distance_Transform_for_Tubular_Structure_Segmentation_in_CT_Scans_CVPR_2020_paper.html) |
 | 2019 | [Shusil Dangi](https://scholar.google.com.hk/citations?user=h12ifugAAAAJ&hl=zh-CN&oi=sra) |A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation [(arxiv)](https://arxiv.org/abs/1901.01238) | None | [Medical Physics](https://aapm.onlinelibrary.wiley.com/doi/abs/10.1002/mp.13853) |
 |2019|[Fernando Navarro](https://scholar.google.com.hk/citations?user=rRKrhrwAAAAJ&hl=zh-CN&oi=sra)|Shape-Aware Complementary-Task Learning for Multi-organ Segmentation [(arxiv)](https://arxiv.org/abs/1908.05099)|None| [MICCAI MLMI 2019](https://link.springer.com/chapter/10.1007/978-3-030-32692-0_71)|
 
