@@ -1,6 +1,6 @@
 # 3D Medical Image Segmentation With Distance Transform Maps
 
-## Motivation: How Distance Transform Maps Boost Segmentation CNNs
+## Motivation: How Distance Transform Maps Boost Segmentation CNNs [(MIDL 2020)](https://2020.midl.io/papers/ma20a.html)
 
 Incorporating the distance Transform maps of image segmentation labels into CNNs-based segmentation tasks has received significant attention in 2019. These methods can be classified into two main classes in terms of the main usage of distance transform maps.
 
@@ -67,9 +67,11 @@ Last but not least, we thank Lequan Yu for his great PyTorch implementation of [
 
 ## Including the following citation in your work would be highly appreciated.
 
+```
 @inproceedings{ma-MIDL2020-SegWithDist,
   title={How Distance Transform Maps Boost Segmentation CNNs: An Empirical Study},
   author={Ma, Jun and Wei, Zhan and Zhang, Yiwen and Wang, Yixin and Lv, Rongfei and Zhu, Cheng and Chen, Gaoxiang and Liu, Jianan and Peng, Chao and Wang, Lei and Wang, Yunpeng and Chen, Jianan},
   booktitle={Medical Imaging with Deep Learning},
   year={2020}
 }
+```
