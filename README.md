@@ -55,6 +55,8 @@ In this repository,  we want to re-implement these methods (published in 2019) a
 | 2019 | Yan Wang     | Deep Distance Transform for Tubular Structure Segmentation in CT Scans | None | [CVPR2020](http://openaccess.thecvf.com/content_CVPR_2020/html/Wang_Deep_Distance_Transform_for_Tubular_Structure_Segmentation_in_CT_Scans_CVPR_2020_paper.html) |
 | 2019 | [Shusil Dangi](https://scholar.google.com.hk/citations?user=h12ifugAAAAJ&hl=zh-CN&oi=sra) |A Distance Map Regularized CNN for Cardiac Cine MR Image Segmentation [(arxiv)](https://arxiv.org/abs/1901.01238) | None | [Medical Physics](https://aapm.onlinelibrary.wiley.com/doi/abs/10.1002/mp.13853) |
 |2019|[Fernando Navarro](https://scholar.google.com.hk/citations?user=rRKrhrwAAAAJ&hl=zh-CN&oi=sra)|Shape-Aware Complementary-Task Learning for Multi-organ Segmentation [(arxiv)](https://arxiv.org/abs/1908.05099)|None| [MICCAI MLMI 2019](https://link.springer.com/chapter/10.1007/978-3-030-32692-0_71)|
+|2019|[Balamurali Murugesan](https://scholar.google.com.hk/citations?user=TmuKf44AAAAJ&hl=en&oi=sra)|Psi-Net: Shape and boundary aware joint multi-task deep network for medical image segmentation [(arXiv)](https://arxiv.org/abs/1902.04099)|None|[EMBC](https://ieeexplore.ieee.org/abstract/document/8857339)|
+|2019|[Balamurali Murugesan](https://scholar.google.com.hk/citations?user=TmuKf44AAAAJ&hl=en&oi=sra)|Conv-MCD: A Plug-and-Play Multi-task Module for Medical Image Segmentation [(arXiv)](https://arxiv.org/abs/1908.05311)|[Pytorch](https://github.com/Bala93/Multi-task-deep-network)|[MLMI](https://link.springer.com/chapter/10.1007/978-3-030-32692-0_34)|
 
 
 ## Acknowledgments
