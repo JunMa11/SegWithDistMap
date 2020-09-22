@@ -74,6 +74,13 @@ Last but not least, we thank Lequan Yu for his great PyTorch implementation of [
   title={How Distance Transform Maps Boost Segmentation CNNs: An Empirical Study},
   author={Ma, Jun and Wei, Zhan and Zhang, Yiwen and Wang, Yixin and Lv, Rongfei and Zhu, Cheng and Chen, Gaoxiang and Liu, Jianan and Peng, Chao and Wang, Lei and Wang, Yunpeng and Chen, Jianan},
   booktitle={Medical Imaging with Deep Learning},
-  year={2020}
+  pages = {479--492},
+  volume = {121},
+  month = {06--08 Jul},
+  year={2020},
+  series = {Proceedings of Machine Learning Research},
+  editor = {Tal Arbel and Ismail Ben Ayed and Marleen de Bruijne and Maxime Descoteaux and Herve Lombaert and Christopher Pal},
+  publisher = {PMLR},
+  url = {http://proceedings.mlr.press/v121/ma20b.html}
 }
 ```
